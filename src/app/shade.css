@@ -2922,3 +2922,21 @@ body:has(.shade-app)::before {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.shade-method-note {
+  margin: 6px 0 0;
+  color: var(--shade-muted);
+  font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shade-footer-legal {
+  flex: 1 1 100%;
+  max-width: 68ch !important;
+  text-align: left !important;
+  color: var(--shade-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}

@@ -4,7 +4,8 @@ import { getLibrary } from "@/lib/server/library";
 import { SEASONS } from "@/lib/skin";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
+// The response varies by query string, so it cannot be prerendered.
+export const dynamic = "force-dynamic";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

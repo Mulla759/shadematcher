@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { FABRICS, type FabricColour } from "../catalog";
 import { isFaceFramingCategory, libraryToFabric, type LibraryIndex } from "../library";
+import shades from "../../../public/catalog/shades.json";
 
 export interface LibraryData {
   fabrics: FabricColour[];
@@ -15,10 +14,16 @@ export interface LibraryData {
 
 let cached: Promise<LibraryData> | null = null;
 
+/**
+ * The index is imported (not read from disk) so it is bundled into the server
+ * function. Reading `public/catalog/shades.json` at runtime works locally but
+ * silently falls back to the demo catalogue on serverless hosts, where the
+ * `public/` folder is served as static files and is not part of the function.
+ */
 async function load(): Promise<LibraryData> {
   try {
-    const file = path.join(process.cwd(), "public", "catalog", "shades.json");
-    const index = JSON.parse(await readFile(file, "utf8")) as LibraryIndex;
+    const index = shades as unknown as LibraryIndex;
+    if (!index.rows?.length) throw new Error("empty catalogue index");
     const mapped = index.rows.map((row) => ({
       row,
       fabric: libraryToFabric(row),

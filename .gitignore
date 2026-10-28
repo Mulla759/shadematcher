@@ -36,3 +36,7 @@ public/mediapipe/wasm/*
 # rebuilt with `npm run scrape:all` / `npm run library:*`
 /library/
 /data/
+
+# optional deployable photo subset (npm run library:subset) — store photography,
+# never committed
+/public/photos/

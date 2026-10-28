@@ -3124,3 +3124,215 @@ input[type="range"]::-webkit-slider-thumb {
     scroll-behavior: auto !important;
   }
 }
+
+/* ——— public beta notice ——— */
+
+.beta-bar {
+  position: relative;
+  z-index: 60;
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.beta-bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 9px 22px;
+}
+
+.beta-bar-note {
+  margin: 0;
+}
+
+.beta-bar-note strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.beta-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.beta-bar-link,
+.beta-bar-close {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.beta-bar-close {
+  font-size: 18px;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.55;
+}
+
+.beta-bar-close:hover {
+  opacity: 1;
+}
+
+.beta-form {
+  display: grid;
+  gap: 12px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 22px 18px;
+}
+
+.beta-field {
+  display: grid;
+  gap: 6px;
+}
+
+.beta-field > span {
+  font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.beta-field textarea,
+.beta-field input {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: 9px 11px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.beta-field textarea {
+  resize: vertical;
+}
+
+.beta-field textarea:focus-visible,
+.beta-field input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.beta-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.beta-submit {
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 8px 18px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.beta-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.beta-form-status {
+  font-size: 12px;
+  color: var(--ok);
+}
+
+.beta-form-status--error {
+  color: var(--danger);
+}
+
+/* ——— policy page ——— */
+
+.policy {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 64px 22px 96px;
+}
+
+.policy-body {
+  max-width: 68ch;
+  margin: 0 auto;
+}
+
+.policy-label {
+  margin: 0 0 14px;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.policy-title {
+  margin: 0 0 18px;
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+.policy-lede {
+  margin: 0 0 44px;
+  max-width: 58ch;
+  color: var(--ink-2);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.policy-section {
+  margin: 0 0 36px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.policy-section h2 {
+  margin: 0 0 12px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 21px;
+  letter-spacing: -0.01em;
+}
+
+.policy-section p,
+.policy-section li {
+  color: var(--ink-2);
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+.policy-section ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.policy-section strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.policy-section a {
+  color: var(--ink);
+  text-underline-offset: 3px;
+}

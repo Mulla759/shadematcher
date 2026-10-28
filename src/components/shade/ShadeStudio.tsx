@@ -23,6 +23,7 @@ import { useCatalogue } from "@/components/shade/useCatalogue";
 import { useSmoothScroll } from "@/components/SmoothScroll";
 import { FABRICS, type FabricColour } from "@/lib/catalog";
 import { readableInk } from "@/lib/color";
+import { SHOW_PHOTOS } from "@/lib/beta";
 import type { CatalogueSort, LibraryMatch } from "@/lib/library";
 import type { Verdict } from "@/lib/match";
 import type { MatchResult } from "@/lib/api/engine";
@@ -1141,12 +1142,24 @@ export function ShadeStudio() {
                               {String(item.rank).padStart(2, "0")}
                             </span>
                             <span className="shade-row-swatch" style={{ background: item.hex }}>
-                              {item.image && (
+                              {item.image && SHOW_PHOTOS && (
                                 <img
                                   src={`/library/${item.image}`}
                                   alt=""
                                   loading="lazy"
                                   decoding="async"
+                                  onError={(event) => {
+                                    const image = event.currentTarget;
+                                    // The scraped library is not in the deploy. Try the
+                                    // optional public subset, then fall back to the
+                                    // measured hex — never a broken image.
+                                    if (!image.dataset.fallback) {
+                                      image.dataset.fallback = "1";
+                                      image.src = `/photos/${item.image}`;
+                                      return;
+                                    }
+                                    image.style.display = "none";
+                                  }}
                                 />
                               )}
                             </span>
@@ -1353,6 +1366,9 @@ export function ShadeStudio() {
                       The same reading can be checked by the server. It scores the same 5,498
                       colours and returns the top result.
                     </p>
+                    <p className="shade-method-note">
+                      Sends colour values only — never your photo or video.
+                    </p>
                   </div>
                   <div className="shade-actions">
                     <button
@@ -1420,6 +1436,12 @@ export function ShadeStudio() {
               <span>Colour atelier</span>
             </div>
             <p>Your camera stays in this tab.</p>
+            <p className="shade-footer-legal">
+              Auriga is a colour-visualisation tool, not a fit or dermatology device. Preview colours
+              on your own screen; fabric, lighting and screen calibration change how a shade reads.
+              Catalogue hex values are measured from product photography, not studio spectrophotometry.
+              Demo portraits are Unsplash images used for testing.
+            </p>
           </footer>
         </div>
       </div>

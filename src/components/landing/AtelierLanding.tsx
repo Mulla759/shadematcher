@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useSmoothScroll } from "@/components/SmoothScroll";
 import { readableInk } from "@/lib/color";
+import { SITE } from "@/lib/site";
 
 const PALETTE = [
   { name: "Saffron", hex: "#C88928", score: "94/100" },
@@ -663,14 +664,15 @@ export function AtelierLanding() {
           <div className="atl-footer-col">
             <span>COMPANY</span>
             <Link href="/read#method">About</Link>
-            <Link href="/read#method">Privacy</Link>
-            <Link href="/read#method">Contact</Link>
-            <Link href="/read#method">Press</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href={SITE.issues} target="_blank">Contact</Link>
+            <Link href={SITE.repo} target="_blank">Source</Link>
           </div>
           <div className="atl-footer-legal">
             <span>COLOUR VISUALISATION · NOT A FIT OR MEDICAL ASSESSMENT</span>
             <span>FITZPATRICK IS ALWAYS AN ESTIMATE</span>
-            <span>© 2025 AURIGA</span>
+            <span>PHOTOS AND HEX VALUES MEASURED FROM SHOP PHOTOGRAPHY</span>
+            <span>© 2026 AURIGA</span>
           </div>
         </div>
         <div className="atl-footer-giant" aria-hidden="true">Auriga</div>

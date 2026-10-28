@@ -49,6 +49,39 @@ Deliberately **not** in Git (generated, large or local):
 
 If `library/` is missing, the search index still loads but the product photography behind each colour will 404. Point `AURIGA_LIBRARY_DIR` (see `.env.example`) at a mounted copy on a server.
 
+## Deploy to Vercel
+
+The repo is ready to connect: import it in Vercel, framework **Next.js**, and the build command in `vercel.json` installs the MediaPipe models before the build (`npm run setup:assets -- --strict && next build`). Without that step the face mesh has no model and the app cannot read a face.
+
+Set these environment variables in Vercel → Settings → Environment Variables (all optional except the first):
+
+| Variable | Effect |
+| --- | --- |
+| `NEXT_PUBLIC_BETA_MODE=1` | Beta banner, feedback form, `noindex` + `robots.txt` disallow. Set to `0` (or remove) at launch. |
+| `NEXT_PUBLIC_SHOW_PHOTOS=0` | Product photos off by default in production — the scraped library is not deployable. Swatches fall back to the measured hex. |
+| `FOUNDATIONS_ENABLED=0` | Foundation matches off in production: the atlas is a generated reference grid, not retail data. |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Vercel KV or Upstash Redis. Enables rate limiting that works across serverless instances; without it the limiter is per-instance. |
+| `FEEDBACK_WEBHOOK_URL` | Optional webhook that receives beta feedback and client error reports. |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Optional contact address shown on `/privacy`. |
+| `NEXT_PUBLIC_FEEDBACK_URL` | Optional external feedback form instead of the built-in one. |
+| `NEXT_PUBLIC_ANALYTICS=1` | Vercel Web Analytics (also enable it in the Vercel dashboard). Off by default because the script only exists on Vercel. |
+
+`NEXT_PUBLIC_*` values are inlined into the browser bundle at build time — set them before the deployment builds, not after.
+
+Verify a deployment with the smoke test:
+
+```bash
+BASE_URL=https://your-deployment.vercel.app npm run smoke
+```
+
+It checks that the pages render, the model assets are present, the **full** catalogue is bundled (not the demo fallback) and `/api/v1/match` answers.
+
+### What a deployment cannot have
+
+- **Product photography.** `library/` is 1.3 GB of third-party store photography and is not in Git. For a private deployment, `npm run library:subset` copies a subset into `public/photos/`, which the app serves as a fallback. Do not commit it.
+- **Foundation recommendations** until real brand data replaces the generated atlas.
+- **A shared rate limit** until KV/Upstash is connected.
+
 ## Routes
 
 | Route | Purpose |
@@ -60,6 +93,8 @@ If `library/` is missing, the search index still loads but the product photograp
 | `POST /api/v1/match` | The all-in-one endpoint: face samples + optional garment → skin profile, ranked colours, garment verdict, foundation matches |
 | `GET /api/v1/catalog` | 72 demo fallback fabrics + 60 demo foundation shades + season palettes |
 | `GET /api/v1/health` | Model/asset readiness and endpoint list |
+| `GET /privacy` | What stays on the device, what leaves it, what the server keeps |
+| `POST /api/v1/feedback` | Beta feedback and client error reports (server log or webhook) |
 
 ## What `/read` does
 

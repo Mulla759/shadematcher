@@ -7,6 +7,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+/**
+ * Vercel rejects request bodies over 4.5 MB before the function runs, so the
+ * app's own guard has to sit below that. The browser flow never uploads an
+ * image — it sends colour samples.
+ */
+const MAX_REQUEST_BYTES = 4_000_000;
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -21,18 +28,21 @@ export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
   const started = Date.now();
   const length = Number(request.headers.get("content-length") ?? 0);
-  if (length > 12_000_000) {
+  if (length > MAX_REQUEST_BYTES) {
     return NextResponse.json(
       {
         ok: false,
         requestId,
-        error: { code: "payload_too_large", message: "Request exceeds 12 MB." },
+        error: {
+          code: "payload_too_large",
+          message: `Request exceeds ${Math.round(MAX_REQUEST_BYTES / 1_000_000)} MB. Send colour samples instead of an image.`,
+        },
       },
       { status: 413, headers: CORS },
     );
   }
 
-  const limit = rateLimit(clientKey(request.headers), 40, 60_000);
+  const limit = await rateLimit(clientKey(request.headers), 40, 60_000);
   if (!limit.ok) {
     return NextResponse.json(
       {

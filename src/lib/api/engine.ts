@@ -12,6 +12,7 @@ import {
 import { computeFaceGeometry, FACE_OVAL, sampleFace } from "../face/landmarks";
 import { decodeImage, extractPalette, heuristicFace } from "../server/image";
 import { getLibrary } from "../server/library";
+import { foundationsEnabled } from "../beta";
 import { MatchRequestSchema, type MatchRequest } from "./schema";
 
 export const ENGINE_VERSION = "0.1.0";
@@ -190,11 +191,17 @@ export async function runMatch(input: MatchRequest, requestId: string): Promise<
     garmentSource = "image";
   }
 
-  const foundation = input.options.includeFoundations
-    ? matchFoundations(skin, { limit: input.options.foundationLimit ?? 5 })
-    : [];
+  const foundationsOn = foundationsEnabled();
+  const foundation =
+    foundationsOn && input.options.includeFoundations
+      ? matchFoundations(skin, { limit: input.options.foundationLimit ?? 5 })
+      : [];
 
-  if (foundation.length > 0) {
+  if (input.options.includeFoundations && !foundationsOn) {
+    warnings.push(
+      "Foundation matches are switched off in this build: the atlas is a generated reference grid, not retail product data.",
+    );
+  } else if (foundation.length > 0) {
     warnings.push(
       "Foundations are matched to the face reading. Face skin usually runs redder than the neck; compare the top match against your jaw/neck in daylight before buying.",
     );

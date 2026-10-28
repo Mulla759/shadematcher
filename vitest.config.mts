@@ -7,6 +7,8 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     reporters: ["default"],
+    // The engine exercises the foundation path in tests; production defaults it off.
+    env: { FOUNDATIONS_ENABLED: "1" },
   },
   resolve: {
     alias: {

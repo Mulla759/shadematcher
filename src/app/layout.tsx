@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import "./shade.css";
 import "./landing.css";
 import { SmoothScrollProvider } from "@/components/SmoothScroll";
+import { BetaBanner } from "@/components/BetaBanner";
+import { ErrorReporter } from "@/components/ErrorReporter";
+import { BETA_MODE } from "@/lib/beta";
 
 export const metadata: Metadata = {
   title: "Auriga — Colour Atelier",
@@ -15,7 +19,8 @@ export const metadata: Metadata = {
       "See a hijab colour on your own face. A skin-tone aware shade engine built for modest fashion.",
     type: "website",
   },
-  robots: { index: true, follow: true },
+  // Public testing stays out of search results until the launch build flips it.
+  robots: BETA_MODE ? { index: false, follow: false } : { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -29,7 +34,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
+        <BetaBanner />
         <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        <ErrorReporter />
+        {process.env.NEXT_PUBLIC_ANALYTICS === "1" ? <Analytics /> : null}
       </body>
     </html>
   );
