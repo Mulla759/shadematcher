@@ -1,0 +1,38 @@
+# dependencies
+node_modules
+
+# next.js
+.next
+/out
+next-env.d.ts
+
+# typescript
+*.tsbuildinfo
+
+# local env / secrets
+.env
+.env*.local
+
+# os
+.DS_Store
+
+# logs
+*.log
+npm-debug.log*
+
+# tests
+/coverage
+
+# local scratch (screenshots + throwaway browser profiles)
+/screenshots
+/.screens
+
+# downloaded model assets — restored with `npm run setup:assets`
+public/models/*.task
+public/models/*.tflite
+public/mediapipe/wasm/*
+
+# scraped textile library + raw scrape output (~1.5 GB, store photography)
+# rebuilt with `npm run scrape:all` / `npm run library:*`
+/library/
+/data/
