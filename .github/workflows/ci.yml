@@ -25,6 +25,13 @@ jobs:
       - name: Install
         run: npm ci --no-audit --no-fund
 
+      - name: Check script syntax
+        run: |
+          for file in scripts/*.mjs scripts/design-check/*.mjs; do node --check "$file"; done
+
+      - name: Check model assets
+        run: npm run setup:assets -- --strict
+
       - name: Test
         run: npm test
 

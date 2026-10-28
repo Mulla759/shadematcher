@@ -50,7 +50,7 @@ if (existsSync(wasmSource)) {
   }
 }
 
-const missing: string[] = [];
+const missing = [];
 
 for (const model of MODELS) {
   const target = path.join(modelTarget, model.file);
@@ -60,15 +60,22 @@ for (const model of MODELS) {
     continue;
   }
   console.log(`Downloading ${model.file}…`);
-  const response = await fetch(model.url);
-  if (!response.ok) {
-    console.warn(`  failed: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(model.url);
+    if (!response.ok) {
+      console.warn(`  failed: ${response.status} ${response.statusText}`);
+      missing.push(model.file);
+      continue;
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    await writeFile(target, buffer);
+    console.log(`✓ ${model.file} (${(buffer.length / 1_048_576).toFixed(1)} MB)`);
+  } catch (error) {
+    // A flaky network must never break `npm install`; the strict build step
+    // turns a missing model into a failed deploy instead.
+    console.warn(`  failed: ${error instanceof Error ? error.message : String(error)}`);
     missing.push(model.file);
-    continue;
   }
-  const buffer = Buffer.from(await response.arrayBuffer());
-  await writeFile(target, buffer);
-  console.log(`✓ ${model.file} (${(buffer.length / 1_048_576).toFixed(1)} MB)`);
 }
 
 if (missing.length > 0 && strict) {
