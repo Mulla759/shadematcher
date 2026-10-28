@@ -2940,3 +2940,35 @@ body:has(.shade-app)::before {
   font-size: 11px;
   line-height: 1.6;
 }
+
+/* ——— catalogue rows: type, price and a direct product link ——— */
+
+.shade-row-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  border-bottom: 1px solid var(--shade-line);
+}
+
+.shade-row-item .shade-row {
+  border-bottom: 0;
+}
+
+.shade-row-link {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  border-left: 1px solid var(--shade-line);
+  color: var(--shade-muted);
+  transition: color var(--shade-ease), background-color var(--shade-ease);
+}
+
+.shade-row-link:hover,
+.shade-row-link:focus-visible {
+  background: var(--shade-paper-subtle);
+  color: var(--shade-ink);
+}
+
+.shade-row-copy span + span {
+  opacity: 0.72;
+}

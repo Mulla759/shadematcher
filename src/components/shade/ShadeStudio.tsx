@@ -69,7 +69,38 @@ type ShadeItem = {
   /** Store CDN URL with resize parameters, for the small row swatch. */
   remoteThumb?: string;
   url?: string;
+  /** What kind of product this is: scarf, fabric by the metre, apparel… */
+  category?: string;
 };
+
+/** Shopper-facing product type, so a row says what the thing actually is. */
+const PRODUCT_TYPES: Record<string, string> = {
+  scarves: "Scarf",
+  fabric: "Fabric by the metre",
+  apparel: "Apparel",
+  unclassified: "Textile",
+  "children-and-young-adult": "Kids",
+  "co-ords": "Co-ord",
+  "modest-activewear": "Activewear",
+  jumpsuit: "Jumpsuit",
+  hoodies: "Hoodie",
+  underscarves: "Underscarf",
+  "arm-covers": "Arm cover",
+  "neck-and-chest-cover": "Neck & chest cover",
+};
+
+function productTypeLabel(category?: string): string {
+  if (!category) return "";
+  const known = PRODUCT_TYPES[category];
+  if (known) return known;
+  return category.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function priceLabel(price?: string): string {
+  if (!price) return "";
+  const value = Number(price);
+  return Number.isFinite(value) && value > 0 ? `$${value.toFixed(2)}` : price;
+}
 
 function shortName(value: string, max = 34): string {
   const clean = value.replace(/\s+/g, " ").trim();
@@ -212,6 +243,7 @@ export function ShadeStudio() {
         remote: match.remote,
         remoteThumb: match.remoteThumb,
         url: match.url,
+        category: match.category,
       })),
     [catalogue.results],
   );
@@ -1135,8 +1167,11 @@ export function ShadeStudio() {
                   >
                     {items.map((item) => {
                       const selected = item.hex.toUpperCase() === activeHexValue.toUpperCase();
+                      const type = productTypeLabel(item.category);
+                      const material = item.fabric && item.fabric !== item.category ? item.fabric : "";
+                      const price = priceLabel(item.price);
                       return (
-                        <li key={item.id}>
+                        <li key={item.id} className="shade-row-item">
                           <button
                             type="button"
                             className="shade-row"
@@ -1181,12 +1216,29 @@ export function ShadeStudio() {
                             </span>
                             <span className="shade-row-copy">
                               <strong>{item.name}</strong>
-                              <span>{item.siteLabel ?? "—"}</span>
+                              <span>
+                                {[type, material].filter(Boolean).join(" · ") || item.siteLabel}
+                              </span>
+                              <span>
+                                {[item.siteLabel, price].filter(Boolean).join(" · ")}
+                              </span>
                             </span>
                             <span className="shade-row-score">
                               {item.score !== null ? Math.round(item.score) : "—"}
                             </span>
                           </button>
+                          {item.url ? (
+                            <a
+                              className="shade-row-link"
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`View ${item.name} at ${item.siteLabel ?? "the shop"}`}
+                              title={`View this product at ${item.siteLabel ?? "the shop"}`}
+                            >
+                              <ArrowUpRight size={14} strokeWidth={1.8} />
+                            </a>
+                          ) : null}
                         </li>
                       );
                     })}
