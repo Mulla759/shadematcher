@@ -62,7 +62,7 @@ Set these environment variables in Vercel → Settings → Environment Variables
 | `NEXT_PUBLIC_BETA_MODE=1` | Beta banner, feedback form, `noindex` + `robots.txt` disallow. Set to `0` (or remove) at launch. |
 | `NEXT_PUBLIC_SHOW_PHOTOS=0` | Product photos off by default in production — the scraped library is not deployable. Swatches fall back to the measured hex. |
 | `FOUNDATIONS_ENABLED=0` | Foundation matches off in production: the atlas is a generated reference grid, not retail data. |
-| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Vercel KV or Upstash Redis. Enables rate limiting that works across serverless instances; without it the limiter is per-instance. |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Vercel KV or Upstash Redis. Enables rate limiting that works across serverless instances; without it the limiter is per-instance. This project has its **own** Upstash database (`shadematcher-kv`, pay-as-you-go) — it is not shared with any other project. |
 | `FEEDBACK_WEBHOOK_URL` | Optional webhook that receives beta feedback and client error reports. |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | Optional contact address shown on `/privacy`. |
 | `NEXT_PUBLIC_FEEDBACK_URL` | Optional external feedback form instead of the built-in one. |
