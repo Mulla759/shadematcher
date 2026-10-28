@@ -11,10 +11,11 @@ No hood is drawn on the face. The colour comparison lives in a box above the vid
 ## Run it
 
 ```bash
-npm install
-npm run setup:assets   # downloads the face model + selfie segmentation model
+npm install          # also runs setup:assets (postinstall)
 npm run dev
 ```
+
+`npm install` restores the MediaPipe runtime and the two model files through the `postinstall` hook. Run `npm run setup:assets` by hand if the assets are missing; `npm run setup:assets -- --strict` fails instead of warning, which is what CI and the Vercel build use.
 
 Open **http://localhost:3000** for the landing page, then **http://localhost:3000/read** for the reading app.
 
@@ -51,11 +52,11 @@ If `library/` is missing, the search index still loads but the product photograp
 
 ## Deploy to Vercel
 
-Live now: **https://shadematcher.vercel.app** (public beta). The Vercel project is linked to this repository, so every push to `main` builds and deploys automatically.
+Live now: **https://shadematcher.vercel.app** (public beta). The Vercel project is linked to this repository, so every push to `main` builds and deploys automatically — no dashboard step needed.
 
-The repo is ready to connect: import it in Vercel, framework **Next.js**, and the build command in `vercel.json` installs the MediaPipe models before the build (`npm run setup:assets -- --strict && next build`). Without that step the face mesh has no model and the app cannot read a face.
+The project runs the Next.js preset with the build command from `vercel.json`: `npm run setup:assets -- --strict && next build`. The strict flag matters — without it the build would succeed with no face model and the app would fail to read a face.
 
-Set these environment variables in Vercel → Settings → Environment Variables (all optional except the first):
+Set these environment variables in Vercel → Settings → Environment Variables (all optional — the app runs with none of them set):
 
 | Variable | Effect |
 | --- | --- |
@@ -80,9 +81,19 @@ It checks that the pages render, the model assets are present, the **full** cata
 
 ### What a deployment cannot have
 
-- **Product photography.** `library/` is 1.3 GB of third-party store photography and is not in Git. For a private deployment, `npm run library:subset` copies a subset into `public/photos/`, which the app serves as a fallback. Do not commit it.
+- **Product photography.** `library/` is 1.3 GB of third-party store photography and is not in Git. On the public beta the swatches fall back to the measured hex. For a private deployment, `npm run library:subset` copies a subset into `public/photos/`, which the app serves as a fallback. Do not commit it.
 - **Foundation recommendations** until real brand data replaces the generated atlas.
-- **A shared rate limit** until KV/Upstash is connected.
+
+## Public testing (beta mode)
+
+With `NEXT_PUBLIC_BETA_MODE=1` the build:
+
+- shows a dismissible beta banner with a feedback form that posts to `POST /api/v1/feedback` (server log, or `FEEDBACK_WEBHOOK_URL`);
+- reports uncaught client errors to the same endpoint;
+- keeps the site out of search results (`noindex` + `robots.txt` disallow);
+- serves `/privacy`, which states what stays on the device, what leaves it and what the server keeps.
+
+Rate limiting is shared across serverless instances through this project's own Upstash database (`shadematcher-kv`): 40 requests per minute per IP on `POST /api/v1/match`, 8 per 10 minutes on `POST /api/v1/feedback`.
 
 ## Routes
 
@@ -93,7 +104,7 @@ It checks that the pages render, the model assets are present, the **full** cata
 | `/lab` | Raw capability: face mesh overlay, sample regions, compute timings, handoff JSON |
 | `/studio` | Experimental fuller panel (colour list, garment check, foundation list). Not linked from `/`. |
 | `POST /api/v1/match` | The all-in-one endpoint: face samples + optional garment → skin profile, ranked colours, garment verdict, foundation matches |
-| `GET /api/v1/catalog` | 72 demo fallback fabrics + 60 demo foundation shades + season palettes |
+| `GET /api/v1/catalog` | Demo fallback fabrics + foundation shades + season palettes, plus the catalogue meta (count, stores, source) |
 | `GET /api/v1/health` | Model/asset readiness and endpoint list |
 | `GET /privacy` | What stays on the device, what leaves it, what the server keeps |
 | `POST /api/v1/feedback` | Beta feedback and client error reports (server log or webhook) |
@@ -258,6 +269,15 @@ src/lib/face/mesh.ts             diagnostic mesh renderer
 src/lib/api/engine.ts            request orchestration
 src/lib/catalog.ts               demo fallback catalogue
 src/components/lab/useToneLab.ts camera + mesh + reading loop
+src/app/privacy/page.tsx         what stays on device, what leaves it
+src/app/api/v1/feedback/route.ts beta feedback + client error reports
+src/components/BetaBanner.tsx    beta notice and feedback form
+src/lib/beta.ts                  feature flags (beta, photos, foundations)
+src/lib/server/rate-limit.ts     KV/Upstash limiter with local fallback
+scripts/smoke.mjs                post-deploy verification
+scripts/build-public-library.mjs optional photo subset for private hosting
+.vercelignore                    keeps the 1.5 GB library out of the upload
+.github/workflows/ci.yml         test + typecheck + build on every push
 ```
 
 ## Tests
@@ -266,13 +286,13 @@ src/components/lab/useToneLab.ts camera + mesh + reading loop
 npm test
 ```
 
-47 tests cover colour conversions, 34 CIEDE2000 reference pairs, robust skin analysis, fabric scoring, foundation matching and the API engine.
+56 tests cover colour conversions, 34 CIEDE2000 reference pairs, robust skin analysis, fabric scoring, foundation matching, the API engine, the rate limiter and the feature flags.
 
 ## Research note
 
 Perfect Corp / YouCam does **not** expose a public “Foundation Shade Finder” endpoint. Its public stack is AI Facial Color Tones Analyzer (20 units) + your own shade database + Makeup VTO (1 unit); scarf VTO is an async generative photo render (2 units, 896×1152), not live drape. The intelligence layer — shade catalogue, undertone logic, ΔE00 ranking, garment evaluation, pairing — is the part you build. This repo is that layer, kept intentionally small.
 
-Demo portraits: Unsplash (`photo-1494790108377-be9c29b29330`, `photo-1531123897727-8f129e1688ce`, `photo-1544005313-94ddf0286df2`). Replace them with your own consented test images before shipping.
+Demo portraits: Unsplash (`photo-1494790108377-be9c29b29330`, `photo-1531123897727-8f129e1688ce`, `photo-1544005313-94ddf0286df2`). Replace them with your own consented test images before a public launch — see `public/demo/README.md`.
 
 ## Library / gallery
 
@@ -287,8 +307,9 @@ The photography belongs to each store; internal colour research only. Do not rep
 
 ## Next, in order
 
-1. Calibrate sampling against a grey card / ColorChecker and add a “lock white balance” mode.
-2. Replace the demo foundation atlas with a real brand catalogue and oxidation data.
-3. Add a garment image upload to `/` (the server palette extraction already exists).
-4. Add a GPU worker only for a photoreal “render this look” path, clearly labelled as an illustration.
-5. Separate research track: multi-angle measurements + pattern/cloth simulation for fit and drape.
+1. Replace the demo portraits with consented test images and publish a `/terms` + contact route.
+2. Calibrate sampling against a grey card / ColorChecker and add a “lock white balance” mode.
+3. Replace the demo foundation atlas with a real brand catalogue and oxidation data.
+4. Add a garment image upload to `/` (the server palette extraction already exists).
+5. Add a GPU worker only for a photoreal “render this look” path, clearly labelled as an illustration.
+6. Separate research track: multi-angle measurements + pattern/cloth simulation for fit and drape.
