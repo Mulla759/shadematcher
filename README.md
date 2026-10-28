@@ -51,6 +51,8 @@ If `library/` is missing, the search index still loads but the product photograp
 
 ## Deploy to Vercel
 
+Live now: **https://shadematcher.vercel.app** (public beta). The Vercel project is linked to this repository, so every push to `main` builds and deploys automatically.
+
 The repo is ready to connect: import it in Vercel, framework **Next.js**, and the build command in `vercel.json` installs the MediaPipe models before the build (`npm run setup:assets -- --strict && next build`). Without that step the face mesh has no model and the app cannot read a face.
 
 Set these environment variables in Vercel → Settings → Environment Variables (all optional except the first):
