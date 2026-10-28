@@ -61,7 +61,7 @@ Set these environment variables in Vercel → Settings → Environment Variables
 | Variable | Effect |
 | --- | --- |
 | `NEXT_PUBLIC_BETA_MODE=1` | Beta banner, feedback form, `noindex` + `robots.txt` disallow. Set to `0` (or remove) at launch. |
-| `NEXT_PUBLIC_SHOW_PHOTOS=0` | Product photos off by default in production — the scraped library is not deployable. Swatches fall back to the measured hex. |
+| `NEXT_PUBLIC_SHOW_PHOTOS=1` | Show the real product photograph. The image is fetched **from the shop's own CDN** using the URL the scrape recorded — nothing is mirrored or republished. Set to `0` for colour fields only, with no third-party requests. |
 | `FOUNDATIONS_ENABLED=0` | Foundation matches off in production: the atlas is a generated reference grid, not retail data. |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Vercel KV or Upstash Redis. Enables rate limiting that works across serverless instances; without it the limiter is per-instance. This project has its **own** Upstash database (`shadematcher-kv`, pay-as-you-go) — it is not shared with any other project. |
 | `FEEDBACK_WEBHOOK_URL` | Optional webhook that receives beta feedback and client error reports. |
@@ -81,7 +81,11 @@ It checks that the pages render, the model assets are present, the **full** cata
 
 ### What a deployment cannot have
 
-- **Product photography.** `library/` is 1.3 GB of third-party store photography and is not in Git. On the public beta the swatches fall back to the measured hex. For a private deployment, `npm run library:subset` copies a subset into `public/photos/`, which the app serves as a fallback. Do not commit it.
+- **A copy of the photography.** The 1.3 GB library is never deployed and nothing is mirrored:
+  each thumbnail is requested from the shop's own image server using the URL recorded at scrape
+  time, resized to ~9 KB with the CDN's own parameters. The bytes stay with the shop, and the
+  shop sees the request — the same as an `<img>` pointing at their product page. For a
+  deployment that must not contact third parties at all, build with `NEXT_PUBLIC_SHOW_PHOTOS=0`.
 - **Foundation recommendations** until real brand data replaces the generated atlas.
 
 ## Public testing (beta mode)
@@ -220,6 +224,11 @@ server uses when the index is not present.
 Applies the same textile filter as the print-flow gallery (textiles only — no accessories,
 gifts or beauty — and one row per actual product photo) and writes `public/catalog/shades.json`:
 **5,498 colourways, 15 stores, 2.6 MB**, generated 2026-10-25.
+
+`scripts/build-hotlink-index.mjs` then adds each photo's original CDN URL as `remote`, plus a
+resized `remoteThumb` — 5,498 of 5,498 rows matched, because the scrape recorded the source URL
+of every image it downloaded. The browser then fetches the picture from the shop that owns it,
+so no photography is ever mirrored or republished here.
 
 | Families | | Categories | | Stores | |
 | --- | --- | --- | --- | --- | --- |
@@ -360,6 +369,7 @@ src/components/BetaBanner.tsx    beta notice and feedback form
 src/lib/beta.ts                  feature flags (beta, photos, foundations)
 src/lib/server/rate-limit.ts     KV/Upstash limiter with local fallback
 scripts/smoke.mjs                post-deploy verification
+scripts/build-hotlink-index.mjs  adds each photo's original shop CDN URL
 scripts/build-public-library.mjs optional photo subset for private hosting
 .vercelignore                    keeps the 1.5 GB library out of the upload
 .github/workflows/ci.yml         test + typecheck + build on every push
