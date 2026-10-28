@@ -172,7 +172,10 @@ context.onmessage = async (event) => {
 
   if (message.type === "init") {
     try {
-      const response = await fetch(message.url);
+      // Revalidate rather than trust the cache: the index changes when the
+      // catalogue is rebuilt, and a stale copy would miss the store image URLs.
+      // The CDN answers with 304 when nothing changed, so this costs nothing.
+      const response = await fetch(message.url, { cache: "no-cache" });
       if (!response.ok) throw new Error(`Catalogue request failed (${response.status}).`);
       const index = (await response.json()) as LibraryIndex;
       families = index.families;
