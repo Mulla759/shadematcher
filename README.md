@@ -165,6 +165,91 @@ This reads `library/catalog.json` and writes `public/catalog/shades.json`:
 The catalogue is loaded once by a Web Worker and scored on-device. The face mesh still uses
 MediaPipe WASM with a GPU delegate and automatic CPU fallback.
 
+## How it finds matches
+
+The catalogue is built offline and ranked on-device. Nothing about the search needs the server.
+
+### 1. Collect — `scripts/scrape-library.mjs`
+
+`data/sources.json` is the registry: 15 Shopify storefronts, each with a role (reference brand,
+hijab brand, fabric reference) and a per-store cap on products and images so the crawl stays
+bounded and polite. Every store exposes a public `/products.json` feed, which the scraper pages
+through 250 products at a time and caches to `data/raw/<slug>-products.json` — 208 MB of raw
+payload across 20 files, the largest being Zelouf Fabrics at 55 MB.
+
+Each product image is downloaded with sharp, resized to 900 px wide, and filed as
+`library/<store>/<category>/<fabric>/<family>/<colour>/NN.jpg`.
+
+### 2. Measure — the shade is read from the photograph
+
+For every photo, sharp crops the **centre band** (50 % of the width, starting a quarter of the
+way down) to skip the white studio backdrop and the model or hanger, downsamples it to 40×40,
+and throws away near-white pixels (backdrop) and near-black pixels (shadow). The shade is the
+**median** remaining pixel — not the mean — so one bright highlight or one deep fold cannot
+drag the colour. Each photo also records its variance (which becomes Matte or Shiny), a
+three-bucket light/mid/dark palette, and a gradient measure for the gradient-heavy stores.
+
+Text does the classification: colour words in the title and tags map to eight canonical
+families, fabric words to a canonical fabric, the Shopify product type to a category. Where a
+product carries no usable colour word, the measured hex decides the family instead.
+
+Every product keeps a `meta.json` and every store a `manifest.json`, with a library-wide
+`library/index.json` recording what was collected.
+
+**What that run produced** — from `library/index.json`, scraped 2026-10-24 between 07:45 and
+08:41 UTC, about 56 minutes wall clock:
+
+| | Count |
+| --- | --- |
+| Stores | 15 |
+| Products | 7,441 |
+| Images | 12,310 |
+
+The biggest contributors were Vela Scarves (769 products, 2,716 images), Fabric Wholesale
+Direct (1,405), Try Modest (1,368), Zelouf Fabrics (1,154), Unique Hijabs (500), Modish Hijab
+(400), Kabayare Fashion (400) and Voile Chic (411).
+
+### 3. Flatten — `scripts/build-index.mjs`
+
+Writes `library/catalog.json` (one row per colourway, 8.2 MB), `library/colors.csv` (4.3 MB),
+`library/gallery.html`, and `src/lib/library.generated.ts` — the hex-deduplicated fallback the
+server uses when the index is not present.
+
+### 4. Publish — `scripts/build-catalog-index.mjs`
+
+Applies the same textile filter as the print-flow gallery (textiles only — no accessories,
+gifts or beauty — and one row per actual product photo) and writes `public/catalog/shades.json`:
+**5,498 colourways, 15 stores, 2.6 MB**, generated 2026-10-25.
+
+| Families | | Categories | | Stores | |
+| --- | --- | --- | --- | --- | --- |
+| Neutral | 2,611 | apparel | 1,974 | Try Modest | 1,159 |
+| Orange | 697 | scarves | 2,263 | Fabric Wholesale Direct | 1,141 |
+| Blue | 570 | fabric | 672 | Vela Scarves | 631 |
+| Green | 492 | specialised | 589 | Unique Hijabs | 459 |
+| Red | 364 | | | Zelouf Fabrics | 452 |
+| Pink | 360 | | | Modish Hijab | 392 |
+| Yellow | 218 | | | Kabayare Fashion | 359 |
+| Purple | 186 | | | Voile Chic | 238 |
+
+### 5. Rank — in a Web Worker, on the user's machine
+
+The browser downloads `shades.json` once and hands it to `src/components/shade/catalogue.worker.ts`,
+which holds the 5,498 rows in memory with a lookup map by id. A search filters by family, store,
+category, face-framing relevance and free text, then scores the survivors with
+`recommendFabrics` — **the same engine the server uses**: lightness separation 40 %, chroma
+25 %, temperature 20 %, hue 15 %, plus a small season-affinity bonus, with ΔE00 at kL = 1.5.
+
+The shortlist is then **diversified** so the six picks are six different looks rather than six
+shades of the same colour: at most two per family, a candidate rejected when it is within ΔE00 7
+of an already-picked colour, relaxed to ΔE00 5 and then filled in order if the list is still
+short.
+
+Because all of this runs in a worker, the camera keeps its frame rate while the search happens,
+and no colourway, product or price ever leaves the browser. `POST /api/v1/match` then runs the
+same ranking against the same bundled index, which is why **Check with server** returns the same
+top colour as the screen.
+
 ## The one endpoint
 
 ```bash
