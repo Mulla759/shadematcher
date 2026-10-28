@@ -21,6 +21,10 @@ export interface LibraryShade {
   fabric: string;
   price: string;
   image: string;
+  /** The store's own image URL. The photo is fetched from them, never mirrored. */
+  remote?: string;
+  /** Store CDN URL with resize parameters, for small swatches. */
+  remoteThumb?: string;
   url: string;
   palette: string;
   gradient: LibraryGradient | null;

@@ -89,9 +89,17 @@ export default function PrivacyPage() {
           <h2>Photography and demo content</h2>
           <p>
             The colour catalogue is built from public product pages at third-party fabric and
-            modest-fashion shops. The photography belongs to those shops and is not republished
-            here; we store the measured hex value and a link back. The demo portraits in this
-            build are Unsplash images used for testing.
+            modest-fashion shops. The photography belongs to those shops: we do not mirror or
+            republish it. When you look at the colour list, each thumbnail is requested straight
+            from the shop&apos;s own image server, which means that shop sees the request — your
+            IP address and browser, the same as clicking their product link. Use the{" "}
+            <code>NEXT_PUBLIC_SHOW_PHOTOS=0</code> build if you would rather see colour fields
+            only, with no third-party requests at all.
+          </p>
+          <p>
+            The demo portraits in this build are Unsplash images used for testing. They are
+            photographs of real people who did not consent to being used as shade-reading test
+            subjects, and should be replaced before a public launch.
           </p>
         </section>
 

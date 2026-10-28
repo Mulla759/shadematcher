@@ -64,6 +64,10 @@ type ShadeItem = {
   fabric?: string;
   price?: string;
   image?: string;
+  /** The store's own image URL — the photo is fetched from them, never mirrored. */
+  remote?: string;
+  /** Store CDN URL with resize parameters, for the small row swatch. */
+  remoteThumb?: string;
   url?: string;
 };
 
@@ -205,6 +209,8 @@ export function ShadeStudio() {
         fabric: match.fabric,
         price: match.price,
         image: match.image,
+        remote: match.remote,
+        remoteThumb: match.remoteThumb,
         url: match.url,
       })),
     [catalogue.results],
@@ -1142,19 +1148,29 @@ export function ShadeStudio() {
                               {String(item.rank).padStart(2, "0")}
                             </span>
                             <span className="shade-row-swatch" style={{ background: item.hex }}>
-                              {item.image && SHOW_PHOTOS && (
+                              {(item.remoteThumb || item.remote || item.image) && SHOW_PHOTOS && (
                                 <img
-                                  src={`/library/${item.image}`}
+                                  src={
+                                    item.remoteThumb ??
+                                    item.remote ??
+                                    `/library/${item.image}`
+                                  }
                                   alt=""
                                   loading="lazy"
                                   decoding="async"
+                                  referrerPolicy="no-referrer"
                                   onError={(event) => {
                                     const image = event.currentTarget;
-                                    // The scraped library is not in the deploy. Try the
-                                    // optional public subset, then fall back to the
-                                    // measured hex — never a broken image.
-                                    if (!image.dataset.fallback) {
+                                    // Store CDN first, then the local library, then an
+                                    // optional public subset. Never a broken image.
+                                    const step = Number(image.dataset.fallback ?? "0");
+                                    if (step === 0 && item.image) {
                                       image.dataset.fallback = "1";
+                                      image.src = `/library/${item.image}`;
+                                      return;
+                                    }
+                                    if (step <= 1 && item.image) {
+                                      image.dataset.fallback = "2";
                                       image.src = `/photos/${item.image}`;
                                       return;
                                     }

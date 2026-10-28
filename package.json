@@ -22,6 +22,7 @@
     "library:build": "node scripts/build-index.mjs",
     "library:catalog": "node scripts/build-catalog-index.mjs",
     "library:subset": "node scripts/build-public-library.mjs",
+    "library:hotlink": "node scripts/build-hotlink-index.mjs",
     "library:swatches": "node scripts/make-swatches.mjs",
     "library:vision-pilot": "node scripts/score-pilot.mjs",
     "print-flow": "node scripts/build-print-flow.mjs"
