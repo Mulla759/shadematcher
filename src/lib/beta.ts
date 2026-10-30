@@ -21,6 +21,22 @@ export const BETA_MODE =
 export const SHOW_PHOTOS =
   process.env.NEXT_PUBLIC_SHOW_PHOTOS === "1" || process.env.NODE_ENV === "development";
 
+/**
+ * Product photography in the fabric gallery.
+ *
+ * The gallery is a published view of the whole collection, so it usually wants
+ * the photographs even when the reading app is kept photo-free. It therefore
+ * has its own switch, and follows `SHOW_PHOTOS` when that one is on.
+ *
+ * With photography off, every card shows the measured colour instead: the
+ * hex for a solid, the real gradient for an ombré. Nothing is broken and no
+ * third-party request is made.
+ */
+export const GALLERY_PHOTOS =
+  process.env.NEXT_PUBLIC_GALLERY_PHOTOS === "1" ||
+  SHOW_PHOTOS ||
+  process.env.NODE_ENV === "development";
+
 /** Optional external feedback form. When empty, the built-in form is used. */
 export const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL ?? "";
 

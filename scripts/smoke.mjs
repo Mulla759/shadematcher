@@ -43,6 +43,24 @@ await check("GET /privacy renders", async () => {
   return `status ${response.status}`;
 });
 
+await check("GET /gallery renders", async () => {
+  const response = await fetch(`${base}/gallery`);
+  assert(response.ok, `status ${response.status}`);
+  const html = await response.text();
+  assert(html.includes("Fabric gallery"), "the gallery heading is missing");
+  return `status ${response.status}`;
+});
+
+await check("GET /catalog/shades.json carries the published index", async () => {
+  const response = await fetch(`${base}/catalog/shades.json`);
+  assert(response.ok, `status ${response.status}`);
+  const index = await response.json();
+  assert((index.rows?.length ?? 0) > 1000, `index has ${index.rows?.length} rows`);
+  assert(index.measurement?.method, "the index does not publish how the colour was read");
+  assert(index.traitCoverage, "the index does not publish its trait coverage");
+  return `${index.rows.length} rows · traits ${JSON.stringify(index.traitCoverage)}`;
+});
+
 await check("GET /api/v1/health is ready", async () => {
   const response = await fetch(`${base}/api/v1/health`);
   const body = await response.json();

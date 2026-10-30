@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import "./shade.css";
 import "./landing.css";
+import "./gallery.css";
 import { SmoothScrollProvider } from "@/components/SmoothScroll";
 import { BetaBanner } from "@/components/BetaBanner";
 import { ErrorReporter } from "@/components/ErrorReporter";

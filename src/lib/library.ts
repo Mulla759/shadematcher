@@ -8,6 +8,22 @@ export interface LibraryGradient {
   deltaE: number;
 }
 
+/**
+ * Weight, opacity and season as the *retailer* states them.
+ *
+ * These are not measurements. They are wording read out of the shop's own tags
+ * and product title, so most rows carry none, and `*From` records where the
+ * wording came from.
+ */
+export interface LibraryTraits {
+  weight?: string[];
+  weightFrom?: "tags" | "title";
+  opacity?: string[];
+  opacityFrom?: "tags" | "title";
+  season?: string[];
+  seasonFrom?: "tags" | "title" | "tags+title";
+}
+
 export interface LibraryShade {
   id: string;
   name: string;
@@ -28,6 +44,33 @@ export interface LibraryShade {
   url: string;
   palette: string;
   gradient: LibraryGradient | null;
+  /* --- Additive fields. Absent on older indexes; nothing depends on them. --- */
+  /** The retailer's finer colour wording, e.g. "taupe" or "sand". */
+  colorFamily?: string;
+  /** The family the measured hex falls into, e.g. "brown". */
+  measuredFamily?: string;
+  /** How the shop labelled the colour: tags, variant, title or the measurement. */
+  familySource?: "tags" | "variant" | "title" | "measured";
+  /** Capture condition: the flatness score of the photo the colour was read from. */
+  flatness?: number;
+  /** How many photos the scrape took of this product. */
+  photoCount?: number;
+  /** Store-stated weight, opacity and season. */
+  traits?: LibraryTraits;
+}
+
+/**
+ * How every colour in the index was read. Published with the index so no
+ * consumer has to guess whether a hex is a measurement or a display value.
+ */
+export interface LibraryMeasurement {
+  method: string;
+  source: string;
+  lab: string;
+  flatness: string;
+  label: string;
+  traits: string;
+  warning: string;
 }
 
 export interface LibraryIndex {
@@ -38,6 +81,9 @@ export interface LibraryIndex {
   families: Record<string, number>;
   stores: Record<string, number>;
   categories: Record<string, number>;
+  /** How many rows carry each store-stated trait. */
+  traitCoverage?: { weight: number; opacity: number; season: number };
+  measurement?: LibraryMeasurement;
   rows: LibraryShade[];
 }
 

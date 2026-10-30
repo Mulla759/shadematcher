@@ -476,6 +476,9 @@ export function ShadeStudio() {
               </a>
             ))}
           </nav>
+          <a className="shade-topbar-gallery" href="/gallery">
+            Fabric gallery
+          </a>
         </div>
         <div className="shade-topbar-right">
           <span
@@ -1253,6 +1256,10 @@ export function ShadeStudio() {
                 <a className="shade-link" href="#read">
                   Read your tone again
                   <ArrowUp size={13} strokeWidth={1.7} />
+                </a>
+                <a className="shade-link" href="/gallery">
+                  Browse the whole collection
+                  <ArrowUpRight size={13} strokeWidth={1.7} />
                 </a>
               </div>
             </section>

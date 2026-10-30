@@ -1,6 +1,6 @@
 # Auriga — open catalogue shade reading (MVP)
 
-`/` is the Atelier landing page from `auriga.pen`. `/read` is the live shade-reading app.
+`/` is the Atelier landing page from `auriga.pen`. `/read` is the live shade-reading app. `/gallery` is the whole collection as a browsable fabric gallery, with somewhere to note how each cloth feels in person.
 
 The core loop:
 
@@ -62,6 +62,7 @@ Set these environment variables in Vercel → Settings → Environment Variables
 | --- | --- |
 | `NEXT_PUBLIC_BETA_MODE=1` | Beta banner, feedback form, `noindex` + `robots.txt` disallow. Set to `0` (or remove) at launch. |
 | `NEXT_PUBLIC_SHOW_PHOTOS=1` | Show the real product photograph. The image is fetched **from the shop's own CDN** using the URL the scrape recorded — nothing is mirrored or republished. Set to `0` for colour fields only, with no third-party requests. |
+| `NEXT_PUBLIC_GALLERY_PHOTOS=1` | Show the product photographs in `/gallery` only. The gallery is a published view of the whole collection, so it usually wants the photographs even when the reading app is kept photo-free. With this off, every card shows the measured colour instead: the hex for a solid, the real gradient for an ombré. No third-party request is made either way. |
 | `FOUNDATIONS_ENABLED=0` | Foundation matches off in production: the atlas is a generated reference grid, not retail data. |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Vercel KV or Upstash Redis. Enables rate limiting that works across serverless instances; without it the limiter is per-instance. This project has its **own** Upstash database (`shadematcher-kv`, pay-as-you-go) — it is not shared with any other project. |
 | `FEEDBACK_WEBHOOK_URL` | Optional webhook that receives beta feedback and client error reports. |
@@ -105,6 +106,7 @@ Rate limiting is shared across serverless instances through this project's own U
 | --- | --- |
 | `/` | Atelier landing page: hero, sample colour box, reading breakdown, collection, how it works, FAQ and CTA |
 | `/read` | Open catalogue app: live camera or uploaded photo, tone reading, 5,498-shade search, colour box above the frame, API call |
+| `/gallery` | The whole collection as a gallery: 5,498 scraped textile colourways + 132 Auriga colours, faceted filters, per-fabric feel notes and a seasonal materials list |
 | `/lab` | Raw capability: face mesh overlay, sample regions, compute timings, handoff JSON |
 | `/studio` | Experimental fuller panel (colour list, garment check, foundation list). Not linked from `/`. |
 | `POST /api/v1/match` | The all-in-one endpoint: face samples + optional garment → skin profile, ranked colours, garment verdict, foundation matches |
@@ -140,6 +142,75 @@ A reading is four steps, and the page always says where you are:
 - When the tone locks, a **See your six colours** button appears and scrolls to the collection.
 - The scan's own colour card travels down with the collection, so the locked tone and the colours it produced sit in one place.
 
+## The fabric gallery (`/gallery`)
+
+The reading app ranks six colours for one face. `/gallery` is the other half of the job: the **whole collection**, browsable on a phone, so someone can take it into a shop, compare the collected fabrics against the physical stock and send back what they found.
+
+### What it shows
+
+Every row of the published index becomes a card — 5,498 scraped textile colourways — plus **132 colours from Auriga's own catalogue** (72 own fabric colours and the 60-shade Auriga Atlas foundation grid). The three sources are labelled separately and never mixed up.
+
+Each card carries the product photograph (hotlinked from the shop's own CDN, resized), the name, the **hex**, the **CIELAB** value, the colour family, the fabric, the shop, the price and a link to the product.
+
+Photography follows `NEXT_PUBLIC_GALLERY_PHOTOS` (or `NEXT_PUBLIC_SHOW_PHOTOS`). With photography off, a card shows the measured colour instead — the hex for a solid, the measured palette for a print, the real gradient for an ombré — so the gallery is never a wall of broken images and never makes a third-party request it was not asked to make.
+
+Every colour is labelled a **digital approximation measured from a scraped image, not an accurate physical swatch** — on the card, in the detail sheet and in the banner above the grid. Auriga's own colours are labelled "digital value" and the Atlas "generated reference", because that is what they are.
+
+### Filters, and what they are allowed to filter
+
+A sticky bar plus a bottom sheet, sized for one thumb. Only fields the data really has:
+
+| Filter | Where it comes from | Coverage in the current index |
+| --- | --- | --- |
+| Source | scraped / Auriga colours / Auriga Atlas | 5,498 / 72 / 60 |
+| Colour family | the retailer's own family label | 11 values |
+| Fabric type | the scraper's fabric folder | 26 values |
+| Weight | **store-stated** wording in tags and titles | 330 rows (lightweight, heavyweight, weightless, medium weight, and the shop's own GSM figures) |
+| Opacity | **store-stated** wording | 203 rows (sheer, opaque, semi-sheer, translucent) |
+| Season | **store-stated** wording | 1,029 rows (spring, summer, autumn, winter) |
+| Shop | the store the colour came from | 15 shops |
+
+The filter sheet prints the coverage next to weight, opacity and season, because those three are sparse and the buyer should know it before they filter on them. Facet counts ignore their own dimension, so a shop never offers a choice that would return nothing.
+
+### Notes, and where they live
+
+There is **no database**. The only external store the project has is Upstash/Vercel KV, and it is used for rate limiting — not for saving anything a person typed. So the feel notes live in this browser's `localStorage`, on this device, and nowhere else:
+
+- **Drape, texture, in-person opacity, verdict** and a free-text note per fabric;
+- a **seasonal materials list** — fabrics kept for a season, which becomes the list someone sends back.
+
+The UI says so in as many words ("These notes stay on this device. Nothing here is uploaded and nothing here is shared with Auriga or anyone else."). The only way a note leaves the device is an explicit export — **copy as text**, **download `.md`** or **download `.json`** — which the person then shares by hand. Device-local notes are never presented as collected or shared data.
+
+### The colour rule, held
+
+The gallery stores what was measured and how it was measured, never a display value:
+
+- the **hex** is the measured dominant colour of the shop's product photograph;
+- the **CIELAB** value is *derived* from that hex at read time and says so;
+- the **capture conditions** travel with it — the photo's flatness score, how many photos were taken, and how the shop labelled the colour (`tags`, `variant`, `title` or `measured`);
+- the retailer's colour word and the family the measured hex falls into are shown as two separate things, because they disagree often enough to matter.
+
+### Schema extension (additive, reversible)
+
+The published index gained optional fields. Nothing existing changed: the rebuild was verified field-by-field against the previous index — same rows, same order, same values, **0 mismatches** on every pre-existing field.
+
+| New field | What it is |
+| --- | --- |
+| `measurement` (index level) | How every colour in the index was read, published with the rows |
+| `traitCoverage` (index level) | How many rows carry each store-stated trait |
+| `colorFamily` | The retailer's finer colour wording, e.g. `taupe` |
+| `measuredFamily` | The family the measured hex falls into, e.g. `brown` |
+| `familySource` | How the shop labelled the colour: `tags`, `variant`, `title`, `measured` |
+| `flatness` | Capture condition: the flatness score of the photo the colour was read from |
+| `photoCount` | How many photos the scrape took of that product |
+| `traits` | Store-stated weight, opacity and season, each with the source of the wording |
+
+To reverse it, rebuild with the previous `scripts/build-catalog-index.mjs` and re-run `npm run library:hotlink`; the gallery reads only the new fields and falls back to plain swatches without them.
+
+### Performance
+
+The index is 4.8 MB raw but **381 KB brotli**, fetched once by a Web Worker. Filtering and paging happen off the main thread, so a phone stays smooth. Cards render 48 at a time with an `IntersectionObserver` sentinel, images are lazy-loaded with `srcset` sizes from the shop's CDN, and every card reserves a square before the photo arrives, so nothing shifts.
+
 ## Scroll behaviour
 
 `/` and `/read` use [Lenis](https://github.com/darkroomengineering/lenis) for interpolated scrolling.
@@ -164,7 +235,16 @@ This reads `library/catalog.json` and writes `public/catalog/shades.json`:
 - **5,498 textile colourways** after the same gallery filter used by `library/print-flow.html`
 - **15 stores**, one row per actual product photo
 - measured dominant hex, family, finish, store, category, fabric, price and product URL
+- the retailer's finer colour word, the family the measured hex falls into, how the shop labelled it, the photo's flatness score and the store-stated weight / opacity / season
 - no image copying: `/library/...` serves the local photography through a typed route
+
+Then add the shops' own CDN URLs, which is what the browser loads the thumbnails from:
+
+```bash
+npm run library:hotlink
+```
+
+Run `library:catalog` first: it rewrites the index and drops the `remote` fields, and `library:hotlink` puts them back.
 
 The catalogue is loaded once by a Web Worker and scored on-device. The face mesh still uses
 MediaPipe WASM with a GPU delegate and automatic CPU fallback.
@@ -341,6 +421,9 @@ The full schema is in `src/lib/api/schema.ts`; the orchestration is in `src/lib/
 ```
 src/app/page.tsx                 Atelier landing page
 src/app/read/page.tsx            open catalogue shade studio
+src/app/gallery/page.tsx         the fabric gallery
+src/app/gallery.css              gallery styles (mobile first)
+src/components/gallery/*         gallery UI, search worker, notes + export
 src/components/landing/*         landing page sections
 src/components/SmoothScroll.tsx  Lenis provider + scroll state
 src/app/landing.css              landing page styles
@@ -349,10 +432,12 @@ src/app/studio/page.tsx          experimental full panel
 src/app/api/v1/match/route.ts    one endpoint
 src/app/library/[...path]/route.ts  local scraped image serving
 src/components/shade/*           studio UI, catalogue hook, search worker
+src/lib/gallery.ts               gallery items, filters, facets
 src/lib/library.ts               catalogue types + FabricColour adapter
 src/lib/server/library.ts        server-side catalogue loader
 public/catalog/shades.json       generated 5,498-shade search index
 scripts/build-catalog-index.mjs  catalogue index generator
+scripts/traits.mjs               reads store-stated weight/opacity/season
 scripts/design-check/            design vs. site comparison harness
 src/lib/color.ts                 sRGB/Lab, CIEDE2000, ITA
 src/lib/skin.ts                  sampling analysis, confidence, palettes
@@ -381,7 +466,7 @@ scripts/build-public-library.mjs optional photo subset for private hosting
 npm test
 ```
 
-56 tests cover colour conversions, 34 CIEDE2000 reference pairs, robust skin analysis, fabric scoring, foundation matching, the API engine, the rate limiter and the feature flags.
+76 tests cover colour conversions, 34 CIEDE2000 reference pairs, robust skin analysis, fabric scoring, foundation matching, the API engine, the rate limiter, the feature flags and the gallery's trait extraction and filters.
 
 ## Research note
 

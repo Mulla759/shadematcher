@@ -230,6 +230,26 @@ body:has(.shade-app)::before {
   background: var(--shade-accent);
 }
 
+.shade-topbar-gallery {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-left: 14px;
+  border-left: 1px solid var(--shade-line);
+  color: var(--shade-muted);
+  font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--shade-ease);
+}
+
+.shade-topbar-gallery:hover {
+  color: var(--shade-ink);
+}
+
 .shade-local {
   display: inline-flex;
   align-items: center;
@@ -2265,7 +2285,8 @@ body:has(.shade-app)::before {
   .shade-topbar-nav,
   .shade-topbar-divider,
   .shade-local,
-  .shade-topbar-reset {
+  .shade-topbar-reset,
+  .shade-topbar-gallery {
     display: none;
   }
 

@@ -225,6 +225,7 @@ export function AtelierLanding() {
           <nav className="atl-nav-links" aria-label="Primary">
             <Link href="/read#read">Tone</Link>
             <Link href="/read#shades">Colours</Link>
+            <Link href="/gallery">Gallery</Link>
             <Link href="/read#method">How it works</Link>
             <Link className="atl-nav-cta" href="/read">
               Start a reading
@@ -659,7 +660,7 @@ export function AtelierLanding() {
             <Link href="/read#shades">Scarves &amp; fabric</Link>
             <Link href="/read#shades">Colour index</Link>
             <Link href="/read#shades">Shops</Link>
-            <Link href="/read#shades">All colours</Link>
+            <Link href="/gallery">Fabric gallery</Link>
           </div>
           <div className="atl-footer-col">
             <span>COMPANY</span>
